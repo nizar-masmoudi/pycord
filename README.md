@@ -5,14 +5,17 @@
 ### Repository Schema
 ```
 .
-├── algorithms
-│   ├── evolutionary.py
-│   ├── exhaustive.py
-│   └── localsearch.py
+├── src
+├── ├── algorithms
+│   │   ├── evolutionary.py
+│   │   ├── exhaustive.py
+│   │   └── localsearch.py
+│   └── data.py
 ├── scripts
 ├── LICENSE
 └── README.md
 ```
+## Data
 ## Algorithms
 ### Exhaustive
 #### Brute Force
