@@ -4,11 +4,10 @@ from typing import Union, Tuple
 
 #####################################! Brute Force !#####################################  
 class BruteForce:
-  def __init__(self) -> None:
-    pass
-  def fit(self, costmat: Union[np.array, list]) -> Tuple[list, float]:
+  @staticmethod
+  def fit(costmat: Union[np.array, list]) -> Tuple[list, float]:
     '''Run the brute force algorithm. This method automatically uses hamiltionian cycles with node of index 0 as departure station.
-    Note: In hamiltonian cycles, departure stations do not matter. 
+    Note: In hamiltonian cycles, departure stations do not matter.
 
     Parameters:
     costmat (Union[np.array, list]): Cost matrix

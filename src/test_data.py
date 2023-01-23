@@ -40,5 +40,6 @@ num_nodes = 5
 data = np.random.randint(0, 100, size = num_nodes*2).reshape(-1, 2)
 costmat = distance_matrix(data, data)
 
-alg = BruteForce()
-opt_path, opt_cost = alg.fit(costmat)
+opt_path, opt_cost = BruteForce.fit(costmat)
+print(opt_path, opt_cost)
+draw(data)
