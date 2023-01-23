@@ -12,18 +12,39 @@ class Individual:
   def __str__(self) -> str:
     return ' ==> '.join([f'[{genome}]' for genome in self.genomes])
 
-  def fitness(self, costmat: np.ndarray) -> np.float:
+  def fitness(self, costmat: np.ndarray) -> float:
+    '''Computes fitness of individual. 
+
+    # Parameters:
+    - `costmat` - `np.ndarray`: The cost matrix.
+    
+    # Returns:
+    - `fitness` - `float`: Fitness of individual.
+    '''
     costmat_ = costmat[self.genomes][:, self.genomes]
     cost = np.sum(np.diagonal(costmat_, offset = 1))
     return 1/cost if cost != 0 else np.inf
 
   def mutate(self, p: float) -> None:
+    '''Mutate individual. 
+
+    # Parameters:
+    - `p` - `float`: Float in [0, 1]. Mutation rate (probability).
+    '''
     if np.random.random() < p:
       i, j = np.random.randint(1, len(self) - 1), np.random.randint(1, len(self) - 1)
       self.genomes[i], self.genomes[j] = self.genomes[j], self.genomes[i]
       
   @staticmethod
   def crossover(parents: List['Individual']) -> List['Individual']:
+    '''Creates offspring from parents. 
+
+    # Parameters:
+    - `parents` - `List[Individual]`: An array of size 2 containing both parents.
+    
+    # Returns:
+    - `offspring` - `List[Individual]`: An array of size 2 containing both offspring. Parents and offspring are kept the same size to avoid over-population or extinction. 
+    '''
     i = np.random.randint(1, len(parents[0]) - 2)
     j = np.random.randint(i + 1, len(parents[0]) - 1)
     offspring = [[-1]*len(parents[0]), [-1]*len(parents[0])]
@@ -36,12 +57,33 @@ class Individual:
 
 class Genetic:
   def __init__(self, population_size: int, mutation_rate: float, elitism: int = None) -> None:
+    '''Initializes the genetic algorithm. 
+
+    # Parameters:
+    - `population_size` - `int`: Number of individuals inside a population.
+    - `mutation_rate` - `float`: A float in `[0, 1]` that indicates the mutation probability after each crossover.
+    - `elitism` - `int`: Number of elite (fittest) solution to pass over to the next generation.
+    
+    # Returns:
+    An instance of the genetic algorithm
+    
+    # Example:
+    >>> evolution = Genetic(population_size = 100, mutation_rate = .2, elitism = 2)
+    '''
     self.population_size = population_size
     self.mutation_rate = mutation_rate
     self.elitism = elitism
     self.population = None
 
-  def initialize_population(self, genomes) -> List[Individual]:
+  def initialize_population(self, genomes: list) -> List[Individual]:
+    '''Samples the initial population. 
+
+    # Parameters:
+    - `genomes` - `list`: The genomes of the individuals.
+    
+    # Returns:
+    - `population` - `List[Individual]`: List of Individuals.
+    '''
     population = []
     genomes_ = np.array(genomes.copy())
     for _ in range(self.population_size):
@@ -50,6 +92,16 @@ class Genetic:
     self.population = population
 
   def rank_selection(self, size: int, costmat: np.ndarray, population: list = None) -> list:
+    '''Select mating pool for crossover. 
+
+    # Parameters:
+    - `size` - `int`: The size of the mating pool.
+    - `costmat` - `np.ndarray`: The cost matrix.
+    - `population` - `list`: The population to select mating pool from.
+    
+    # Returns:
+    - `mating_pool` - `list`: List of parents to crossover.
+    '''
     population = population if population else self.population
     ranks = np.arange(1, len(population) + 1, step = 1, dtype = np.int)
     population = sorted(population, key = lambda ind: ind.fitness(costmat))
@@ -57,15 +109,25 @@ class Genetic:
     mating_pool = np.random.choice(population, size = size, p = norm_ranks)
     return mating_pool.tolist()
 
-  def fit(self, genomes: np.ndarray, max_generations: int, costmat: np.ndarray, verbose: bool = False):
+  def simulate(self, max_generations: int, costmat: np.ndarray, verbose: bool = False):
+    '''Simulates the evolution of individuals. 
+
+    # Parameters:
+    - `max_generations` - `int`: Maximum number of generations to simulate.
+    - `costmat` - `np.ndarray`: The cost matrix.
+    - `verbose` - `bool`: Default to `False`. Indicates whether the algorithm should report the state of generations.
+    
+    # Example:
+    >>> num_nodes = 10
+    >>> data = np.random.randint(0, 100, size = num_nodes*2).reshape(-1, 2)
+    >>> costmat = distance_matrix(data, data)
+    >>> evolution = Genetic(population_size = 100, mutation_rate = .2, elitism = 2)
+    >>> evolution.simulate(max_generations = 30, costmat = costmat, verbose = True)
+    '''
     genomes = list(range(len(costmat)))
     genomes.append(genomes[0])
     self.initialize_population(genomes)
-    if verbose:
-      print()
-      print('|{:^10}   {:^10}   {:^10}'.format('Generation', 'Mean cost', 'Least cost'))
-      print('-'*38)
-    for _ in range(max_generations):
+    for gen in range(1, max_generations + 1):
       population = []
       if self.elitism:
         elites = sorted(self.population, key = lambda ind: ind.fitness(costmat))[-self.elitism:]
@@ -79,10 +141,29 @@ class Genetic:
         population += offspring
       self.population = population.copy()
       if verbose:
-        print('|{:^10}   {:^10.2f}   {:^10.2f}|'.format(_ + 1, np.round(np.mean([1/ind.fitness(costmat) for ind in self.population]), 5), 1/self.get_fittest(costmat, return_fitness=True)))
-        print('-'*38)
+        print('-'*75)
+        print('Generation [{:>2}/{:>2}] - Average fitness {:<6.4e} - Best fitness {:<6.4e}'.format(gen, max_generations, np.round(np.mean([ind.fitness(costmat) for ind in self.population]), 5), self.get_fittest(costmat, return_fitness = True)))
 
   def get_fittest(self, costmat: np.ndarray, return_fitness: bool = False):
+    '''Returns the fitness/fittest individual of the current population. 
+
+    # Parameters:
+    - `costmat` - `np.ndarray`: The cost matrix.
+    - `return_fitness` - `bool`: Default to `False`. If `True` returns fitness, else returns fittest individual.
+    
+    # Returns:
+    - `individual` - `Individual`: The fittest individual of the current population.
+    - `fitness` - `float`: The best fitness of the current population.
+    
+    # Example:
+    >>> num_nodes = 10
+    >>> data = np.random.randint(0, 100, size = num_nodes*2).reshape(-1, 2)
+    >>> costmat = distance_matrix(data, data)
+    >>> evolution = Genetic(population_size = 100, mutation_rate = .2, elitism = 2)
+    >>> evolution.simulate(max_generations = 30, costmat = costmat, verbose = True)
+    >>> ind = evolution.get_fittest(costmat)
+    >>> path = ind.genomes
+    '''
     fittest = sorted(self.population, key = lambda ind: ind.fitness(costmat))[-1]
     if return_fitness:
       return fittest.fitness(costmat)
