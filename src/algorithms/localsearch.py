@@ -1,4 +1,6 @@
 import numpy as np
+import numpy.ma as ma
+from typing import Union, Tuple
 
 #####################################! 2-Opt !#####################################
 class OPT:
@@ -26,5 +28,17 @@ class OPT:
 #####################################! Greedy Search !#####################################
 # TODO      
 class Greedy:
-  def __init__(self) -> None:
-    pass
+  @staticmethod
+  def fit(costmat: Union[np.array, list]) -> Tuple[list, float]:
+    idxs = range(len(costmat))
+    path = [0]
+    cost = 0
+    for _ in range(len(costmat)): # For each hop (number of hops is equal to number of stations)
+      masked = ma.masked_where(np.logical_or(costmat[path[-1]] == 0, np.isin(idxs, path)), costmat[path[-1]]) # Mask current station and visited stations
+      if masked.mask.sum() < len(idxs): 
+        cost += np.min(masked)
+        path.append(np.argmin(masked))
+    # Return to initial station
+    path.append(path[0])
+    cost += costmat[path[-1], path[-2]]
+    return path, cost
