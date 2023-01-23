@@ -10,5 +10,6 @@ def draw(data, path):
       G.add_edge(path[i], path[i + 1], label = 0)
       G.add_edge(path[i], path[i + 1], label = 1)
     # Draw Graph
-    nx.draw_networkx(G, pos = {i: data[i] for i in range(len(data))}, connectionstyle='arc3, rad = 0.1')
+    pos = {i: data[i] for i in range(len(data))}
+    nx.draw_networkx(G, pos = pos, connectionstyle='arc3, rad = 0.1')
     plt.show()

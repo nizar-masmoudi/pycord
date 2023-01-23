@@ -6,8 +6,8 @@ from typing import Union, Tuple
 class BruteForce:
   @staticmethod
   def fit(costmat: Union[np.array, list]) -> Tuple[list, float]:
-    '''Run the brute force algorithm. This method automatically uses hamiltionian cycles with node of index 0 as departure station.
-    Note: In hamiltonian cycles, departure stations do not matter.
+    '''Run the brute force algorithm. This method is exhaustive as it tries all possible combinations and picks the best one.
+    This method returns the absolute optimal solution.
 
     Parameters:
     costmat (Union[np.array, list]): Cost matrix

@@ -26,19 +26,27 @@ class OPT:
             improved = True
       
 #####################################! Greedy Search !#####################################
-# TODO      
 class Greedy:
   @staticmethod
   def fit(costmat: Union[np.array, list]) -> Tuple[list, float]:
+    '''Run the greedy search algorithm. This heuristic picks the closest station each hop.
+    This method is a heuristic and returns only a local cost minima in exchange of execution speed.
+
+    Parameters:
+    costmat (Union[np.array, list]): Cost matrix
+
+    Returns:
+    Tuple[list, float]: Locally minimal path with its total cost (nodes are identified by their positions w.r. to the cost matrix)
+    '''
     idxs = range(len(costmat))
-    path = [0]
-    cost = 0
+    min_path = [0]
+    min_cost = 0
     for _ in range(len(costmat)): # For each hop (number of hops is equal to number of stations)
-      masked = ma.masked_where(np.logical_or(costmat[path[-1]] == 0, np.isin(idxs, path)), costmat[path[-1]]) # Mask current station and visited stations
+      masked = ma.masked_where(np.logical_or(costmat[min_path[-1]] == 0, np.isin(idxs, min_path)), costmat[min_path[-1]]) # Mask current station and visited stations
       if masked.mask.sum() < len(idxs): 
-        cost += np.min(masked)
-        path.append(np.argmin(masked))
+        min_cost += np.min(masked)
+        min_path.append(np.argmin(masked))
     # Return to initial station
-    path.append(path[0])
-    cost += costmat[path[-1], path[-2]]
-    return path, cost
+    min_path.append(min_path[0])
+    min_cost += costmat[min_path[-1], min_path[-2]]
+    return min_path, min_cost

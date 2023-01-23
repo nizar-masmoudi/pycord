@@ -13,10 +13,9 @@ data = np.random.randint(0, 100, size = num_nodes*2).reshape(-1, 2)
 costmat = distance_matrix(data, data)
 
 # opt_path, opt_cost = BruteForce.fit(costmat)
-# print(opt_path, opt_cost)
 
-path, cost = Greedy.fit(costmat)
-print(*path)
-print(cost)
+# path, cost = Greedy.fit(costmat)
 
-draw(data, path)
+
+
+# draw(data, path)
