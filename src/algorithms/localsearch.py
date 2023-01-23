@@ -2,9 +2,8 @@ import numpy as np
 
 #####################################! 2-Opt !#####################################
 class OPT:
-  def __init__(self, cost_matrix: np.ndarray) -> None:
+  def __init__(self) -> None:
     self.path = None
-    self.cost_matrix = cost_matrix
 
   def swap(self, i: int, j: int) -> None:
     path_ = self.path.copy()
@@ -12,14 +11,15 @@ class OPT:
     path_[i + 2:j] = list(reversed(path_[i + 2:j]))
     self.path = path_
 
-  def fit(self, init_path: np.ndarray) -> None:
-    self.path = init_path
+  def fit(self, costmat: np.ndarray) -> None:
+    self.path = list(range(len(costmat)))
+    self.path.append(self.path[0])
     improved = True
     while improved:
       improved = False
       for i in range(0, len(self.path) - 2):
         for j in range(i + 2, len(self.path) - 1):
-          if self.cost_matrix[self.path[i + 1], self.path[i]] + self.cost_matrix[self.path[j + 1], self.path[j]] > self.cost_matrix[self.path[j], self.path[i]] + self.cost_matrix[self.path[j + 1], self.path[i + 1]]:
+          if costmat[self.path[i + 1], self.path[i]] + costmat[self.path[j + 1], self.path[j]] > costmat[self.path[j], self.path[i]] + costmat[self.path[j + 1], self.path[i + 1]]:
             self.swap(i, j)
             improved = True
       

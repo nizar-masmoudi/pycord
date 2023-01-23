@@ -12,9 +12,9 @@ class Individual:
   def __str__(self) -> str:
     return ' ==> '.join([f'[{genome}]' for genome in self.genomes])
 
-  def fitness(self, cost_matrix: np.ndarray) -> np.float:
-    cost_matrix_ = cost_matrix[self.genomes][:, self.genomes]
-    cost = np.sum(np.diagonal(cost_matrix_, offset = 1))
+  def fitness(self, costmat: np.ndarray) -> np.float:
+    costmat_ = costmat[self.genomes][:, self.genomes]
+    cost = np.sum(np.diagonal(costmat_, offset = 1))
     return 1/cost if cost != 0 else np.inf
 
   def mutate(self, p: float) -> None:
@@ -49,15 +49,17 @@ class Genetic:
       population += [Individual(genomes_.copy().tolist())]
     self.population = population
 
-  def rank_selection(self, size: int, cost_matrix: np.ndarray, population: list = None) -> list:
+  def rank_selection(self, size: int, costmat: np.ndarray, population: list = None) -> list:
     population = population if population else self.population
     ranks = np.arange(1, len(population) + 1, step = 1, dtype = np.int)
-    population = sorted(population, key = lambda ind: ind.fitness(cost_matrix))
+    population = sorted(population, key = lambda ind: ind.fitness(costmat))
     norm_ranks = ranks/np.sum(ranks)
     mating_pool = np.random.choice(population, size = size, p = norm_ranks)
     return mating_pool.tolist()
 
-  def fit(self, genomes: np.ndarray, max_generations: int, cost_matrix: np.ndarray, verbose: bool = False):
+  def fit(self, genomes: np.ndarray, max_generations: int, costmat: np.ndarray, verbose: bool = False):
+    genomes = list(range(len(costmat)))
+    genomes.append(genomes[0])
     self.initialize_population(genomes)
     if verbose:
       print()
@@ -66,24 +68,24 @@ class Genetic:
     for _ in range(max_generations):
       population = []
       if self.elitism:
-        elites = sorted(self.population, key = lambda ind: ind.fitness(cost_matrix))[-self.elitism:]
+        elites = sorted(self.population, key = lambda ind: ind.fitness(costmat))[-self.elitism:]
         population += elites
-        mating_pool = self.rank_selection(len(self.population) - self.elitism, cost_matrix, population = [ind for ind in self.population if ind not in elites])
+        mating_pool = self.rank_selection(len(self.population) - self.elitism, costmat, population = [ind for ind in self.population if ind not in elites])
       else:
-        mating_pool = self.rank_selection(len(self.population), cost_matrix)
+        mating_pool = self.rank_selection(len(self.population), costmat)
       for i in range(0, len(mating_pool) - 1, 2):
         offspring = Individual.crossover(mating_pool[i:i+2])
         for child in offspring: child.mutate(self.mutation_rate)
         population += offspring
       self.population = population.copy()
       if verbose:
-        print('|{:^10}   {:^10.2f}   {:^10.2f}|'.format(_ + 1, np.round(np.mean([1/ind.fitness(cost_matrix) for ind in self.population]), 5), 1/self.get_fittest(cost_matrix, return_fitness=True)))
+        print('|{:^10}   {:^10.2f}   {:^10.2f}|'.format(_ + 1, np.round(np.mean([1/ind.fitness(costmat) for ind in self.population]), 5), 1/self.get_fittest(costmat, return_fitness=True)))
         print('-'*38)
 
-  def get_fittest(self, cost_matrix: np.ndarray, return_fitness: bool = False):
-    fittest = sorted(self.population, key = lambda ind: ind.fitness(cost_matrix))[-1]
+  def get_fittest(self, costmat: np.ndarray, return_fitness: bool = False):
+    fittest = sorted(self.population, key = lambda ind: ind.fitness(costmat))[-1]
     if return_fitness:
-      return fittest.fitness(cost_matrix)
+      return fittest.fitness(costmat)
     return fittest
   
   
@@ -111,14 +113,14 @@ class Ant:
     self.visited.append(next_node)
     self.to_visit.remove(next_node)
 
-  def path_cost(self, cost_matrix) -> np.float:
-    cost_matrix_ = cost_matrix[self.visited][:, self.visited]
-    diag = np.diagonal(cost_matrix_, offset = 1)
+  def path_cost(self, costmat) -> np.float:
+    costmat_ = costmat[self.visited][:, self.visited]
+    diag = np.diagonal(costmat_, offset = 1)
     return np.sum(diag)
 
-  def pheromone_intensity(self, cost_matrix: np.ndarray, q: float) -> np.ndarray:
+  def pheromone_intensity(self, costmat: np.ndarray, q: float) -> np.ndarray:
     pheromones = np.zeros((len(self.nodes), len(self.nodes)))
-    pheromones[self.visited[:-1], self.visited[1:]] = q/self.path_cost(cost_matrix)
+    pheromones[self.visited[:-1], self.visited[1:]] = q/self.path_cost(costmat)
     return pheromones
 
 class AntColony:
@@ -131,12 +133,12 @@ class AntColony:
     self.rho = rho
 
   def update_pheromones(self) -> None:
-    self.pheromones = self.rho*self.pheromones + np.sum([ant.pheromone_intensity(self.cost_matrix, self.q) for ant in self.ants], axis = 0)
+    self.pheromones = self.rho*self.pheromones + np.sum([ant.pheromone_intensity(self.costmat, self.q) for ant in self.ants], axis = 0)
 
-  def fit(self, nodes: list, cost_matrix: np.ndarray, verbose: bool = False) -> None:
+  def fit(self, nodes: list, costmat: np.ndarray, verbose: bool = False) -> None:
     self.nodes = nodes
-    self.cost_matrix = cost_matrix
-    self.visibility = np.divide(1, cost_matrix, where = (cost_matrix != 0))
+    self.costmat = costmat
+    self.visibility = np.divide(1, costmat, where = (costmat != 0))
     self.pheromones = 1 - np.eye(len(self.nodes))
     self.ants = [Ant(self.nodes, np.random.randint(1, len(self.nodes))) for _ in range(self.colony_size)]
 
@@ -148,17 +150,17 @@ class AntColony:
         ant.reset()
         for __ in range(len(self.nodes) - 1):
           ant.move(self.visibility, self.pheromones, alpha = self.alpha, beta = self.beta)
-        if verbose: print(ant, ant.path_cost(self.cost_matrix))
+        if verbose: print(ant, ant.path_cost(self.costmat))
       self.update_pheromones()
       if verbose: print()
 
   def get_path(self, init_pos: int = 0, cycle: bool = True, return_cost: bool = False) -> list:
-    ant = sorted(self.ants, key = lambda ant: ant.path_cost(self.cost_matrix))[0]
+    ant = sorted(self.ants, key = lambda ant: ant.path_cost(self.costmat))[0]
     path = ant.visited
-    path_cost = ant.path_cost(self.cost_matrix)
+    path_cost = ant.path_cost(self.costmat)
     if cycle:
       path = path + path[:1]
-      path_cost += self.cost_matrix[ant.visited[-1], ant.visited[0]]
+      path_cost += self.costmat[ant.visited[-1], ant.visited[0]]
     if return_cost:
       return path, path_cost
     return path

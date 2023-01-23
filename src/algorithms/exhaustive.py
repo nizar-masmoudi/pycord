@@ -1,27 +1,25 @@
 import numpy as np
 from itertools import permutations
-from data import Data
+from typing import Union, Tuple
 
-#####################################! Brute Force !#####################################
-# class BruteForce:
-#   def __init__(self) -> None:
-#     self.path = None
-#     self.cost = None
-#   def fit(self, data: list, costmat: np.ndarray) -> np.ndarray:
-#     combinations = list(permutations(range(1, len(data) - 1)))
-#     combinations = [[0] + list(combination) + [0] for combination in combinations]
-#     costs = [np.sum(np.diagonal(costmat[combination][:, combination], offset = 1)) for combination in combinations]
-#     self.path = combinations[np.argmin(costs)]
-#     self.cost = np.min(costs)
-
+#####################################! Brute Force !#####################################  
 class BruteForce:
   def __init__(self) -> None:
-    self.path = None
-    self.cost = None
-  def fit(self, data: Data) -> np.ndarray:
-    costmat = data.costmat
-    combinations = list(permutations(range(1, len(data.coords) - 1)))
-    combinations = [[0] + list(combination) + [0] for combination in combinations]
+    pass
+  def fit(self, costmat: Union[np.array, list]) -> Tuple[list, float]:
+    '''Run the brute force algorithm. This method automatically uses hamiltionian cycles with node of index 0 as departure station.
+    Note: In hamiltonian cycles, departure stations do not matter. 
+
+    Parameters:
+    costmat (Union[np.array, list]): Cost matrix
+
+    Returns:
+    Tuple[list, float]: Optimal path with its total cost (nodes are identified by their positions w.r. to the cost matrix)
+    '''
+    inter_stations = list(range(len(costmat)))[1:]
+    combinations = [[0] + list(combination) + [0] for combination in permutations(inter_stations)]
     costs = [np.sum(np.diagonal(costmat[combination][:, combination], offset = 1)) for combination in combinations]
-    self.path = data[combinations[np.argmin(costs)]]
-    self.cost = np.min(costs)
+    opt_path = combinations[np.argmin(costs)]
+    opt_cost = np.min(costs)
+    return opt_path, opt_cost
+    
