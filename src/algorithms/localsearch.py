@@ -68,13 +68,20 @@ class Greedy:
   @staticmethod
   def fit(costmat: Union[np.array, list]) -> Tuple[list, float]:
     '''Run the greedy search algorithm. This heuristic picks the closest station each hop.
+    
     This method is a heuristic and returns only a local cost minima in exchange of execution speed.
 
-    Parameters:
+    # Parameters:
     costmat (Union[np.array, list]): Cost matrix
 
-    Returns:
+    # Returns:
     Tuple[list, float]: Locally minimal path with its total cost (nodes are identified by their positions w.r. to the cost matrix)
+    
+    # Example:
+    >>> num_nodes = 20
+    >>> data = np.random.randint(0, 100, size = num_nodes*2).reshape(-1, 2)
+    >>> costmat = scipy.spatial.distance_matrix(data, data)
+    >>> path, cost = Greedy.fit(costmat)
     '''
     idxs = range(len(costmat))
     min_path = [0]
